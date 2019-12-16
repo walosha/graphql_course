@@ -16,20 +16,23 @@ const Posts = [
     id: 1,
     title: "there is a country",
     body: "xxxxx",
-    isPublished: true
+    isPublished: true,
+    author: 1
   },
   {
     id: 2,
     title: "Javascrript The Definitive Guide",
     body:
       "The whole gist about the javscript language both on the sever and client side",
-    isPublished: false
+    isPublished: false,
+    author: 1
   },
   {
     id: 2,
     title: "Holy Bible",
     body: "The of God,creation and Jesus Christ",
-    isPublished: true
+    isPublished: true,
+    author: 2
   }
 ];
 
@@ -53,6 +56,7 @@ type Post {
     title: String!
     body: String!
     isPublished: Boolean!
+    author:User!
 }`;
 
 //Resolvers
@@ -79,15 +83,11 @@ const resolvers = {
         email: "walosha@yahoo.com",
         age: 31
       };
-    },
-
-    post() {
-      return {
-        id: "andbdh872727",
-        title: "The programing language in 2019?",
-        body: "Error: Query.User defined in resolvers,To be continued later!",
-        isPublished: true
-      };
+    }
+  },
+  Post: {
+    author(parent, args, ctx, info) {
+      return Users.find(user => user.id === parent.author);
     }
   }
 };

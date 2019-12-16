@@ -3,13 +3,43 @@ import { GraphQLServer } from "graphql-yoga";
 // 5 scalar types in grapghQL:  Bolean Int Float ID String
 // Type defination schema
 
+//Users DataBase
+
+const Users = [
+  { id: 1, name: "Olawale", email: "walosha@yahoo.com", age: 31 },
+  { id: 2, name: "dammy", email: "dammy@yahoo.com", age: 27, class: "masters" },
+  { id: 3, name: "shigo", email: "remi@gamil.com" }
+];
+
+const Posts = [
+  {
+    id: 1,
+    title: "there is a country",
+    body: "xxxxx",
+    isPublished: true
+  },
+  {
+    id: 2,
+    title: "Javascrript The Definitive Guide",
+    body:
+      "The whole gist about the javscript language both on the sever and client side",
+    isPublished: false
+  },
+  {
+    id: 2,
+    title: "Holy Bible",
+    body: "The of God,creation and Jesus Christ",
+    isPublished: true
+  }
+];
+
 const typeDefs = `
 type Query {
-    add(numbers:[Int!]):Int
-    greeting(name:String):String!
+    Users(query:String): [User!]!
+    Posts(query:String): [Post!]!
     me: User!
-    post : POST!
-    grades:[Int!]!
+    post : Post!
+   
 }
 type User {
     name: String!
@@ -18,7 +48,7 @@ type User {
     class:String
 }
 
-type POST {
+type Post {
     id: ID!
     title: String!
     body: String!
@@ -29,13 +59,19 @@ type POST {
 
 const resolvers = {
   Query: {
-    greeting(parents, args, ctx, info) {
-      if (!args.name) return "please Insert name";
-      return `My name is ${args.name}`;
+    Users(parents, args, ctx, info) {
+      if (!args.query) return Users;
+      return Users.filter(user =>
+        user.name.toLowerCase().includes(args.query.toLowerCase())
+      );
     },
-    add(parents, args, ctx, info) {
-      if (args.numbers.length === 0) return 0;
-      return args.numbers.reduce((acc, cur) => acc + cur, 0);
+    Posts(parents, args, ctx, info) {
+      if (!args.query) return Posts;
+      return Posts.filter(
+        post =>
+          post.title.toLowerCase().includes(args.query.toLowerCase()) ||
+          post.body.toLowerCase().includes(args.query.toLowerCase())
+      );
     },
     me() {
       return {
@@ -44,9 +80,7 @@ const resolvers = {
         age: 31
       };
     },
-    grades() {
-      return [70, 34, 67, 45, 90, 50];
-    },
+
     post() {
       return {
         id: "andbdh872727",

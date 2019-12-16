@@ -5,10 +5,11 @@ import { GraphQLServer } from "graphql-yoga";
 
 const typeDefs = `
 type Query {
-    add(a:Float,b:Float):Float
+    add(numbers:[Int!]):Int
     greeting(name:String):String!
     me: User!
     post : POST!
+    grades:[Int!]!
 }
 type User {
     name: String!
@@ -33,7 +34,8 @@ const resolvers = {
       return `My name is ${args.name}`;
     },
     add(parents, args, ctx, info) {
-      return args.a + args.b;
+      if (args.numbers.length === 0) return 0;
+      return args.numbers.reduce((acc, cur) => acc + cur, 0);
     },
     me() {
       return {
@@ -41,6 +43,9 @@ const resolvers = {
         email: "walosha@yahoo.com",
         age: 31
       };
+    },
+    grades() {
+      return [70, 34, 67, 45, 90, 50];
     },
     post() {
       return {

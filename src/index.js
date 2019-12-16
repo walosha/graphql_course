@@ -1,30 +1,54 @@
 import { GraphQLServer } from "graphql-yoga";
 
+// 5 scalar types in grapghQL:  Bolean Int Float ID String
 // Type defination schema
 
 const typeDefs = `
 type Query {
-    hello: String!,
+    add(a:Float,b:Float):Float
+    greeting(name:String):String!
+    me: User!
+    post : POST!
+}
+type User {
     name: String!
-    location: String!
-    bio: String!
+    email: String!
+    age: Int
+    class:String
+}
+
+type POST {
+    id: ID!
+    title: String!
+    body: String!
+    isPublished: Boolean!
 }`;
 
 //Resolvers
 
 const resolvers = {
   Query: {
-    hello() {
-      return "This is my first GrapghQL app";
+    greeting(parents, args, ctx, info) {
+      if (!args.name) return "please Insert name";
+      return `My name is ${args.name}`;
     },
-    name() {
-      return "I am Damilola Adesun ";
+    add(parents, args, ctx, info) {
+      return args.a + args.b;
     },
-    location() {
-      return "Ori-Okuta, Lagos ";
+    me() {
+      return {
+        name: "Olawale Afuye",
+        email: "walosha@yahoo.com",
+        age: 31
+      };
     },
-    bio() {
-      return "I am Front-End web developer with percific professional service! ";
+    post() {
+      return {
+        id: "andbdh872727",
+        title: "The programing language in 2019?",
+        body: "Error: Query.User defined in resolvers,To be continued later!",
+        isPublished: true
+      };
     }
   }
 };

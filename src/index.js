@@ -4,7 +4,7 @@ import { GraphQLServer } from "graphql-yoga";
 
 //Users DataBase
 
-const Users = [
+let Users = [
   { id: 1, name: "Olawale", email: "walosha@yahoo.com", age: 31 },
   { id: 2, name: "dammy", email: "dammy@yahoo.com", age: 27, class: "masters" },
   { id: 3, name: "shigo", email: "remi@gamil.com" }
@@ -12,7 +12,7 @@ const Users = [
 
 //Posts DataBase
 
-const Posts = [
+let Posts = [
   {
     id: 1,
     title: "there is a country",
@@ -39,7 +39,7 @@ const Posts = [
 
 //Comments DataBase
 
-const Comments = [
+let Comments = [
   { id: 1000, text: "i love this inspirational book", author: 3, post: 3 },
   { id: 1001, text: "A message from the God Almight", author: 2, post: 3 },
   { id: 1003, text: "The book is vey simplifyed version", author: 2, post: 2 },
@@ -59,6 +59,35 @@ type Query {
    
 }
 
+type Mutation {
+    createUser(data: createUserInput):User!
+    deleteUser(id: ID!):User!
+    createPost(data: createPostInput):Post!
+    deletePost(id: ID!):Post!
+    createComment(data: createCommentInput):Comment!
+    deleteComment(id: ID!):Comment!
+
+}
+
+input createUserInput {
+  name:String!
+  email:String!
+  age: Int
+}
+
+input createPostInput {
+title: String!
+body: String!
+isPublished: Boolean!
+author:Int!
+}
+
+input createCommentInput {
+text:String!
+author:Int!
+post:Int!
+}
+
 type Comment {
   id:ID!
   text:String!
@@ -67,7 +96,7 @@ type Comment {
 }
 
 type User {
-    id: Int!
+    id: ID!
     name: String!
     email: String!
     age: Int
@@ -114,6 +143,88 @@ const resolvers = {
         email: "walosha@yahoo.com",
         age: 31
       };
+    }
+  },
+  Mutation: {
+    createUser(parent, args, ctx, info) {
+      const { name, email, age } = args.data;
+      const isEmailAvail = Users.some(user => user.email === email);
+      if (isEmailAvail) return new Error("The Email is available");
+      const user = {
+        id: Math.round(Math.random() * 20000),
+        name,
+        email,
+        age
+      };
+
+      Users.push(user);
+      return user;
+    },
+    deleteUser(parent, args, ctx, info) {
+      const { id } = args;
+      const userIndex = Users.findIndex(user => user.id == id);
+
+      if (userIndex === -1) return new Error("User does not exist !");
+
+      const deletedUser = Users.splice(userIndex, 1);
+
+      Posts = Posts.filter(post => {
+        const match = post.author == id;
+
+        if (match) {
+          Comments = Comments.filter(comment => comment.post !== post.id);
+        }
+
+        return !match;
+      });
+
+      Comments = Comments.filter(comment => comment.author !== id);
+
+      return deletedUser[0];
+    },
+    createPost(parent, args, ctx, info) {
+      const { title, body, isPublished, author } = args.data;
+      const doesUserExist = Users.some(user => user.id === author);
+      if (!doesUserExist) return new Error("User does not exist!");
+      const post = {
+        id: Math.round(Math.random() * 20000),
+        title,
+        body,
+        isPublished,
+        author
+      };
+
+      Posts.push(post);
+      return post;
+    },
+    deletePost(parent, args, ctx, info) {
+      const { id } = args;
+      const postIndex = Posts.findIndex(post => post.id == id);
+      if (postIndex === -1) throw new Error("The post does not exist!");
+      const deletePost = Posts.splice(postIndex, 1);
+      Comments = Comments.filter(comment => comment.post != id);
+      return deletePost[0];
+    },
+    createComment(parents, args, ctx, info) {
+      const { text, author, post } = args.data;
+      const doesUserExist = Users.some(user => user.id === author);
+      if (!doesUserExist) return new Error("User does not exist!");
+      const comment = {
+        id: Math.round(Math.random() * 20000),
+        text,
+        author,
+        post
+      };
+
+      Comments.push(comment);
+      return comment;
+    },
+    deleteComment(parent, args, ctx, info) {
+      const { id } = args;
+      const commentIndex = Comments.findIndex(comment => comment.id == id);
+      if (commentIndex == -1) throw new Error("The comment does not exist!");
+
+      return Comments.splice(commentIndex, 1)[0];
     }
   },
   Post: {

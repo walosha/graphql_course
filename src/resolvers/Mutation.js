@@ -13,6 +13,30 @@ const Mutation = {
     Users.push(user);
     return user;
   },
+  updateUser(parent, args, { db: { Users } }, info) {
+    const {
+      id,
+      data: { name, email, age }
+    } = args;
+
+    const user = Users.find(user => user.id == id);
+    const isEmailTaken = Users.some(user => user.email == email);
+
+    if (!user) return new Error("User not found");
+    if (isEmailTaken) return new Error("Email taken by another user");
+
+    if (typeof email === "string") {
+      user.email = email;
+    }
+    if (typeof name === "string") {
+      user.name = name;
+    }
+    if (age !== "undefined") {
+      user.age = age;
+    }
+
+    return user;
+  },
   deleteUser(parent, args, { db: { Users, Posts, Comments } }, info) {
     const { id } = args;
     const userIndex = Users.findIndex(user => user.id == id);
@@ -33,12 +57,6 @@ const Mutation = {
 
     Comments = Comments.filter(comment => comment.author !== id);
 
-    // console.log(Comments);
-    // console.log("---------------------------------");
-    console.log(Posts);
-    // console.log("-----------------------------------");
-    // console.log(Users);
-
     return deletedUser[0];
   },
   createPost(parent, args, { db: { Users, Posts } }, info) {
@@ -54,6 +72,27 @@ const Mutation = {
     };
 
     Posts.push(post);
+    return post;
+  },
+  updatePost(parent, args, { db: { Posts } }, info) {
+    const {
+      id,
+      data: { title, body, isPublished }
+    } = args;
+
+    const post = Posts.find(post => post.id == id);
+    if (!post) return new Error("The post does not Exist");
+
+    if (typeof title === "string") {
+      post.title = title;
+    }
+    if (typeof body === "string") {
+      post.body = body;
+    }
+    if (typeof isPublished === "boolean") {
+      post.isPublished = isPublished;
+    }
+
     return post;
   },
   deletePost(parent, args, { db: { Posts, Comments } }, info) {
@@ -78,10 +117,25 @@ const Mutation = {
     Comments.push(comment);
     return comment;
   },
+  updateComment(parent, args, { db: { Comments } }, info) {
+    const {
+      id,
+      data: { text }
+    } = args;
+
+    const comment = Comments.find(comment => comment.id == id);
+    if (!comment) return new Error("The comment does not Exist");
+
+    if (typeof text === "string") {
+      comment.text = text;
+    }
+
+    return comment;
+  },
   deleteComment(parent, args, { db: { Comments } }, info) {
     const { id } = args;
     const commentIndex = Comments.findIndex(comment => comment.id == id);
-    console.log(Comments);
+
     if (commentIndex == -1) throw new Error("The comment does not exist!");
 
     return Comments.splice(commentIndex, 1)[0];

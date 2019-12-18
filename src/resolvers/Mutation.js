@@ -138,10 +138,7 @@ const Mutation = {
   },
   createComment(parents, args, { pubsub, db: { Users, Comments } }, info) {
     const { text, author, post } = args.data;
-    const doesUserExist = Users.some(user => {
-      console.log(user.id, author);
-      return user.id == author;
-    });
+    const doesUserExist = Users.some(user => user.id == author);
     if (!doesUserExist) return new Error("User does not exist!");
     const comment = {
       id: Math.round(Math.random() * 20000),
@@ -182,16 +179,16 @@ const Mutation = {
   deleteComment(parent, args, { pubsub, db: { Comments } }, info) {
     const { id } = args;
     const commentIndex = Comments.findIndex(comment => comment.id === id);
-    console.log(commentIndex);
+
     if (commentIndex == -1) throw new Error("The comment does not exist!");
-    const [comment] = Comments.splice(commentIndex, 1);
-    pubsub.publish(`comment ${comment.post}`, {
+    const [deletedComment] = Comments.splice(commentIndex, 1);
+    pubsub.publish(`comment ${deletedComment.post}`, {
       comment: {
         mutation: "DELETED",
-        data: comment
+        data: deletedComment
       }
     });
-    return comment;
+    return deletedComment;
   }
 };
 

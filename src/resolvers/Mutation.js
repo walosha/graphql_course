@@ -59,8 +59,8 @@ const Mutation = {
 
     return deletedUser[0];
   },
-  createPost(parent, args, { db: { Users, Posts } }, info) {
-    const { title, body, isPublished, author } = args.data;
+  createPost(parent, { data }, { pubsub, db: { Users, Posts } }, info) {
+    const { title, body, isPublished, author } = data;
     const doesUserExist = Users.some(user => user.id === author);
     if (!doesUserExist) return new Error("User does not exist!");
     const post = {
@@ -72,9 +72,18 @@ const Mutation = {
     };
 
     Posts.push(post);
+    if (isPublished == true) {
+      pubsub.publish("post", {
+        post: {
+          mutation: "CREATED",
+          data: post
+        }
+      });
+    }
+
     return post;
   },
-  updatePost(parent, args, { db: { Posts } }, info) {
+  updatePost(parent, args, { pubsub, db: { Posts } }, info) {
     const {
       id,
       data: { title, body, isPublished }
@@ -82,6 +91,8 @@ const Mutation = {
 
     const post = Posts.find(post => post.id == id);
     if (!post) return new Error("The post does not Exist");
+
+    const originalPost = Object.assign({}, post); // Use Babel transpiler to use Es6 spread operator!
 
     if (typeof title === "string") {
       post.title = title;
@@ -91,6 +102,28 @@ const Mutation = {
     }
     if (typeof isPublished === "boolean") {
       post.isPublished = isPublished;
+      if (originalPost.isPublished && isPublished) {
+        pubsub.publish("post", {
+          post: {
+            mutation: "UPDATED",
+            data: post
+          }
+        });
+      } else if (originalPost.isPublished && !isPublished) {
+        pubsub.publish("post", {
+          post: {
+            mutation: "DELETED",
+            data: post
+          }
+        });
+      } else if (!originalPost.isPublished && isPublished) {
+        pubsub.publish("post", {
+          post: {
+            mutation: "CREATED",
+            data: post
+          }
+        });
+      }
     }
 
     return post;
@@ -103,9 +136,12 @@ const Mutation = {
     Comments = Comments.filter(comment => comment.post != id);
     return deletePost[0];
   },
-  createComment(parents, args, { db: { Users, Comments } }, info) {
+  createComment(parents, args, { pubsub, db: { Users, Comments } }, info) {
     const { text, author, post } = args.data;
-    const doesUserExist = Users.some(user => user.id === author);
+    const doesUserExist = Users.some(user => {
+      console.log(user.id, author);
+      return user.id == author;
+    });
     if (!doesUserExist) return new Error("User does not exist!");
     const comment = {
       id: Math.round(Math.random() * 20000),
@@ -115,12 +151,18 @@ const Mutation = {
     };
 
     Comments.push(comment);
+    pubsub.publish(`comment ${post}`, {
+      comment: {
+        mutation: "CREATED",
+        data: comment
+      }
+    });
     return comment;
   },
-  updateComment(parent, args, { db: { Comments } }, info) {
+  updateComment(parent, args, { pubsub, db: { Comments } }, info) {
     const {
       id,
-      data: { text }
+      data: { text, post }
     } = args;
 
     const comment = Comments.find(comment => comment.id == id);
@@ -129,16 +171,27 @@ const Mutation = {
     if (typeof text === "string") {
       comment.text = text;
     }
-
+    pubsub.publish(`comment ${post}`, {
+      comment: {
+        mutation: "UPDATED",
+        data: comment
+      }
+    });
     return comment;
   },
-  deleteComment(parent, args, { db: { Comments } }, info) {
+  deleteComment(parent, args, { pubsub, db: { Comments } }, info) {
     const { id } = args;
-    const commentIndex = Comments.findIndex(comment => comment.id == id);
-
+    const commentIndex = Comments.findIndex(comment => comment.id === id);
+    console.log(commentIndex);
     if (commentIndex == -1) throw new Error("The comment does not exist!");
-
-    return Comments.splice(commentIndex, 1)[0];
+    const [comment] = Comments.splice(commentIndex, 1);
+    pubsub.publish(`comment ${comment.post}`, {
+      comment: {
+        mutation: "DELETED",
+        data: comment
+      }
+    });
+    return comment;
   }
 };
 

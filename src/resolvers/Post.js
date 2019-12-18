@@ -3,7 +3,6 @@ const Post = {
     return Users.find(user => user.id === parent.author);
   },
   comments(parent, args, { db: { Comments } }, info) {
-    console.log(Comments);
     return Comments.filter(comment => comment.post === parent.id);
   }
 };

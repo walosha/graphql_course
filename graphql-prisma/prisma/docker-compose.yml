@@ -15,8 +15,8 @@ services:
             connector: postgres
             host: ec2-3-91-139-25.compute-1.amazonaws.com
             port: '5432'
-            database: dejh0alirt675n
+            database: d16of3rkvr7eak
             ssl: true
-            user: pvjslphpirhzxs
-            password: c3ec1a270ac265a72aceee99fa685c1e1c859044ad6e9354b11a5770e457980f
+            user: tgnydhvtuwfflz
+            password: cac7e19ad07941724aad2734208b134a111a7fed9e2df7dcc878c969cff8e12d
             migrations: true

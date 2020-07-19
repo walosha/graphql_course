@@ -1,0 +1,22 @@
+type User {
+  id: ID! @unique
+  name: String!
+  email: String! @unique
+  posts: [Post!]!
+}
+
+type Post {
+  id: ID! @unique
+  title: String!
+  body: String!
+  published: Boolean
+  user: User!
+  comment: [Comment!]!
+}
+
+type Comment {
+  id: ID! @unique
+  text: String!
+  user: User!
+  post: Post!
+}

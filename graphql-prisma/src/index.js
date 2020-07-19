@@ -6,7 +6,7 @@ import Post from "./resolvers/Post";
 import Subscription from "./resolvers/Subscription";
 import Query from "./resolvers/Query";
 import User from "./resolvers/User";
-
+import "./prisma";
 const pubsub = new PubSub();
 
 //Resolvers
@@ -16,7 +16,7 @@ const resolvers = {
   Subscription,
   Post,
   Comment,
-  User
+  User,
 };
 
 const server = new GraphQLServer({
@@ -24,8 +24,10 @@ const server = new GraphQLServer({
   resolvers,
   context: {
     db,
-    pubsub
-  }
+    pubsub,
+  },
 });
 
-server.start(() => console.log(" the server has started on port 4000"));
+server.start(() =>
+  console.log(" the server has started on port 4000")
+);

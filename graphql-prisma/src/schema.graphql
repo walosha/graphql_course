@@ -40,12 +40,11 @@ type CommentSubscriptionPayload {
 input createUserInput {
   name: String!
   email: String!
-  age: Int
 }
+
 input updateUserInput {
   name: String
   email: String
-  age: Int
 }
 
 input createPostInput {
@@ -54,6 +53,7 @@ input createPostInput {
   isPublished: Boolean!
   author: ID!
 }
+
 input updatePostInput {
   title: String
   body: String
@@ -82,8 +82,6 @@ type User {
   id: ID!
   name: String!
   email: String!
-  age: Int
-  class: String
   posts: [Post!]!
   comments: [Comment!]!
 }

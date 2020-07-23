@@ -12,8 +12,8 @@ type Post {
   id: ID! @unique
   title: String!
   body: String!
-  published: Boolean
-  user: User!
+  isPublished: Boolean!
+  author: User!
     @relation(name: "PostToUser", onDelete: SET_NULL)
   comment: [Comment!]!
     @relation(name: "CommentToPost", onDelete: CASCADE)
@@ -22,7 +22,7 @@ type Post {
 type Comment {
   id: ID! @unique
   text: String!
-  user: User!
+  author: User!
     @relation(name: "CommentToUser", onDelete: SET_NULL)
   post: Post!
     @relation(name: "CommentToPost", onDelete: SET_NULL)

@@ -1,5 +1,5 @@
-# source: http# source: http://localhost:4466
-# timestamp: Sun Jul 19 2020 02:21:23 GMT+0100 (West Africa Standard Time)
+# source: http://localhost:4466
+# timestamp: Wed Jul 22 2020 14:30:23 GMT+0100 (West Africa Standard Time)
 
 type AggregateComment {
   count: Int!
@@ -23,7 +23,7 @@ type BatchPayload {
 type Comment implements Node {
   id: ID!
   text: String!
-  user(where: UserWhereInput): User!
+  author(where: UserWhereInput): User!
   post(where: PostWhereInput): Post!
 }
 
@@ -45,8 +45,13 @@ type CommentConnection {
 
 input CommentCreateInput {
   text: String!
-  user: UserCreateOneInput!
+  author: UserCreateOneWithoutCommentsInput!
   post: PostCreateOneWithoutCommentInput!
+}
+
+input CommentCreateManyWithoutAuthorInput {
+  create: [CommentCreateWithoutAuthorInput!]
+  connect: [CommentWhereUniqueInput!]
 }
 
 input CommentCreateManyWithoutPostInput {
@@ -54,9 +59,14 @@ input CommentCreateManyWithoutPostInput {
   connect: [CommentWhereUniqueInput!]
 }
 
+input CommentCreateWithoutAuthorInput {
+  text: String!
+  post: PostCreateOneWithoutCommentInput!
+}
+
 input CommentCreateWithoutPostInput {
   text: String!
-  user: UserCreateOneInput!
+  author: UserCreateOneWithoutCommentsInput!
 }
 
 """
@@ -137,8 +147,17 @@ input CommentSubscriptionWhereInput {
 
 input CommentUpdateInput {
   text: String
-  user: UserUpdateOneInput
+  author: UserUpdateOneWithoutCommentsInput
   post: PostUpdateOneWithoutCommentInput
+}
+
+input CommentUpdateManyWithoutAuthorInput {
+  create: [CommentCreateWithoutAuthorInput!]
+  connect: [CommentWhereUniqueInput!]
+  disconnect: [CommentWhereUniqueInput!]
+  delete: [CommentWhereUniqueInput!]
+  update: [CommentUpdateWithWhereUniqueWithoutAuthorInput!]
+  upsert: [CommentUpsertWithWhereUniqueWithoutAuthorInput!]
 }
 
 input CommentUpdateManyWithoutPostInput {
@@ -150,14 +169,30 @@ input CommentUpdateManyWithoutPostInput {
   upsert: [CommentUpsertWithWhereUniqueWithoutPostInput!]
 }
 
+input CommentUpdateWithoutAuthorDataInput {
+  text: String
+  post: PostUpdateOneWithoutCommentInput
+}
+
 input CommentUpdateWithoutPostDataInput {
   text: String
-  user: UserUpdateOneInput
+  author: UserUpdateOneWithoutCommentsInput
+}
+
+input CommentUpdateWithWhereUniqueWithoutAuthorInput {
+  where: CommentWhereUniqueInput!
+  data: CommentUpdateWithoutAuthorDataInput!
 }
 
 input CommentUpdateWithWhereUniqueWithoutPostInput {
   where: CommentWhereUniqueInput!
   data: CommentUpdateWithoutPostDataInput!
+}
+
+input CommentUpsertWithWhereUniqueWithoutAuthorInput {
+  where: CommentWhereUniqueInput!
+  update: CommentUpdateWithoutAuthorDataInput!
+  create: CommentCreateWithoutAuthorInput!
 }
 
 input CommentUpsertWithWhereUniqueWithoutPostInput {
@@ -313,7 +348,7 @@ input CommentWhereInput {
   All values not ending with the given string.
   """
   text_not_ends_with: String
-  user: UserWhereInput
+  author: UserWhereInput
   post: PostWhereInput
 }
 
@@ -328,18 +363,29 @@ Long can represent values between -(2^63) and 2^63 - 1.
 scalar Long
 
 type Mutation {
+  createUser(data: UserCreateInput!): User!
   createPost(data: PostCreateInput!): Post!
   createComment(data: CommentCreateInput!): Comment!
-  createUser(data: UserCreateInput!): User!
-  updatePost(data: PostUpdateInput!, where: PostWhereUniqueInput!): Post
+  updateUser(
+    data: UserUpdateInput!
+    where: UserWhereUniqueInput!
+  ): User
+  updatePost(
+    data: PostUpdateInput!
+    where: PostWhereUniqueInput!
+  ): Post
   updateComment(
     data: CommentUpdateInput!
     where: CommentWhereUniqueInput!
   ): Comment
-  updateUser(data: UserUpdateInput!, where: UserWhereUniqueInput!): User
+  deleteUser(where: UserWhereUniqueInput!): User
   deletePost(where: PostWhereUniqueInput!): Post
   deleteComment(where: CommentWhereUniqueInput!): Comment
-  deleteUser(where: UserWhereUniqueInput!): User
+  upsertUser(
+    where: UserWhereUniqueInput!
+    create: UserCreateInput!
+    update: UserUpdateInput!
+  ): User!
   upsertPost(
     where: PostWhereUniqueInput!
     create: PostCreateInput!
@@ -350,20 +396,23 @@ type Mutation {
     create: CommentCreateInput!
     update: CommentUpdateInput!
   ): Comment!
-  upsertUser(
-    where: UserWhereUniqueInput!
-    create: UserCreateInput!
-    update: UserUpdateInput!
-  ): User!
-  updateManyPosts(data: PostUpdateInput!, where: PostWhereInput): BatchPayload!
+  updateManyUsers(
+    data: UserUpdateInput!
+    where: UserWhereInput
+  ): BatchPayload!
+  updateManyPosts(
+    data: PostUpdateInput!
+    where: PostWhereInput
+  ): BatchPayload!
   updateManyComments(
     data: CommentUpdateInput!
     where: CommentWhereInput
   ): BatchPayload!
-  updateManyUsers(data: UserUpdateInput!, where: UserWhereInput): BatchPayload!
-  deleteManyPosts(where: PostWhereInput): BatchPayload!
-  deleteManyComments(where: CommentWhereInput): BatchPayload!
   deleteManyUsers(where: UserWhereInput): BatchPayload!
+  deleteManyPosts(where: PostWhereInput): BatchPayload!
+  deleteManyComments(
+    where: CommentWhereInput
+  ): BatchPayload!
 }
 
 enum MutationType {
@@ -411,8 +460,8 @@ type Post implements Node {
   id: ID!
   title: String!
   body: String!
-  published: Boolean
-  user(where: UserWhereInput): User!
+  isPublished: Boolean!
+  author(where: UserWhereInput): User!
   comment(
     where: CommentWhereInput
     orderBy: CommentOrderByInput
@@ -443,13 +492,13 @@ type PostConnection {
 input PostCreateInput {
   title: String!
   body: String!
-  published: Boolean
-  user: UserCreateOneWithoutPostsInput!
+  isPublished: Boolean!
+  author: UserCreateOneWithoutPostsInput!
   comment: CommentCreateManyWithoutPostInput
 }
 
-input PostCreateManyWithoutUserInput {
-  create: [PostCreateWithoutUserInput!]
+input PostCreateManyWithoutAuthorInput {
+  create: [PostCreateWithoutAuthorInput!]
   connect: [PostWhereUniqueInput!]
 }
 
@@ -458,18 +507,18 @@ input PostCreateOneWithoutCommentInput {
   connect: PostWhereUniqueInput
 }
 
+input PostCreateWithoutAuthorInput {
+  title: String!
+  body: String!
+  isPublished: Boolean!
+  comment: CommentCreateManyWithoutPostInput
+}
+
 input PostCreateWithoutCommentInput {
   title: String!
   body: String!
-  published: Boolean
-  user: UserCreateOneWithoutPostsInput!
-}
-
-input PostCreateWithoutUserInput {
-  title: String!
-  body: String!
-  published: Boolean
-  comment: CommentCreateManyWithoutPostInput
+  isPublished: Boolean!
+  author: UserCreateOneWithoutPostsInput!
 }
 
 """
@@ -494,8 +543,8 @@ enum PostOrderByInput {
   title_DESC
   body_ASC
   body_DESC
-  published_ASC
-  published_DESC
+  isPublished_ASC
+  isPublished_DESC
   updatedAt_ASC
   updatedAt_DESC
   createdAt_ASC
@@ -506,7 +555,7 @@ type PostPreviousValues {
   id: ID!
   title: String!
   body: String!
-  published: Boolean
+  isPublished: Boolean!
 }
 
 type PostSubscriptionPayload {
@@ -557,18 +606,18 @@ input PostSubscriptionWhereInput {
 input PostUpdateInput {
   title: String
   body: String
-  published: Boolean
-  user: UserUpdateOneWithoutPostsInput
+  isPublished: Boolean
+  author: UserUpdateOneWithoutPostsInput
   comment: CommentUpdateManyWithoutPostInput
 }
 
-input PostUpdateManyWithoutUserInput {
-  create: [PostCreateWithoutUserInput!]
+input PostUpdateManyWithoutAuthorInput {
+  create: [PostCreateWithoutAuthorInput!]
   connect: [PostWhereUniqueInput!]
   disconnect: [PostWhereUniqueInput!]
   delete: [PostWhereUniqueInput!]
-  update: [PostUpdateWithWhereUniqueWithoutUserInput!]
-  upsert: [PostUpsertWithWhereUniqueWithoutUserInput!]
+  update: [PostUpdateWithWhereUniqueWithoutAuthorInput!]
+  upsert: [PostUpsertWithWhereUniqueWithoutAuthorInput!]
 }
 
 input PostUpdateOneWithoutCommentInput {
@@ -579,23 +628,23 @@ input PostUpdateOneWithoutCommentInput {
   upsert: PostUpsertWithoutCommentInput
 }
 
-input PostUpdateWithoutCommentDataInput {
+input PostUpdateWithoutAuthorDataInput {
   title: String
   body: String
-  published: Boolean
-  user: UserUpdateOneWithoutPostsInput
-}
-
-input PostUpdateWithoutUserDataInput {
-  title: String
-  body: String
-  published: Boolean
+  isPublished: Boolean
   comment: CommentUpdateManyWithoutPostInput
 }
 
-input PostUpdateWithWhereUniqueWithoutUserInput {
+input PostUpdateWithoutCommentDataInput {
+  title: String
+  body: String
+  isPublished: Boolean
+  author: UserUpdateOneWithoutPostsInput
+}
+
+input PostUpdateWithWhereUniqueWithoutAuthorInput {
   where: PostWhereUniqueInput!
-  data: PostUpdateWithoutUserDataInput!
+  data: PostUpdateWithoutAuthorDataInput!
 }
 
 input PostUpsertWithoutCommentInput {
@@ -603,10 +652,10 @@ input PostUpsertWithoutCommentInput {
   create: PostCreateWithoutCommentInput!
 }
 
-input PostUpsertWithWhereUniqueWithoutUserInput {
+input PostUpsertWithWhereUniqueWithoutAuthorInput {
   where: PostWhereUniqueInput!
-  update: PostUpdateWithoutUserDataInput!
-  create: PostCreateWithoutUserInput!
+  update: PostUpdateWithoutAuthorDataInput!
+  create: PostCreateWithoutAuthorInput!
 }
 
 input PostWhereInput {
@@ -822,13 +871,13 @@ input PostWhereInput {
   All values not ending with the given string.
   """
   body_not_ends_with: String
-  published: Boolean
+  isPublished: Boolean
 
   """
   All values that are not equal to given value.
   """
-  published_not: Boolean
-  user: UserWhereInput
+  isPublished_not: Boolean
+  author: UserWhereInput
   comment_every: CommentWhereInput
   comment_some: CommentWhereInput
   comment_none: CommentWhereInput
@@ -839,6 +888,15 @@ input PostWhereUniqueInput {
 }
 
 type Query {
+  users(
+    where: UserWhereInput
+    orderBy: UserOrderByInput
+    skip: Int
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): [User]!
   posts(
     where: PostWhereInput
     orderBy: PostOrderByInput
@@ -857,7 +915,10 @@ type Query {
     first: Int
     last: Int
   ): [Comment]!
-  users(
+  user(where: UserWhereUniqueInput!): User
+  post(where: PostWhereUniqueInput!): Post
+  comment(where: CommentWhereUniqueInput!): Comment
+  usersConnection(
     where: UserWhereInput
     orderBy: UserOrderByInput
     skip: Int
@@ -865,10 +926,7 @@ type Query {
     before: String
     first: Int
     last: Int
-  ): [User]!
-  post(where: PostWhereUniqueInput!): Post
-  comment(where: CommentWhereUniqueInput!): Comment
-  user(where: UserWhereUniqueInput!): User
+  ): UserConnection!
   postsConnection(
     where: PostWhereInput
     orderBy: PostOrderByInput
@@ -887,15 +945,6 @@ type Query {
     first: Int
     last: Int
   ): CommentConnection!
-  usersConnection(
-    where: UserWhereInput
-    orderBy: UserOrderByInput
-    skip: Int
-    after: String
-    before: String
-    first: Int
-    last: Int
-  ): UserConnection!
 
   """
   Fetches an object given its ID
@@ -909,9 +958,15 @@ type Query {
 }
 
 type Subscription {
-  post(where: PostSubscriptionWhereInput): PostSubscriptionPayload
-  comment(where: CommentSubscriptionWhereInput): CommentSubscriptionPayload
-  user(where: UserSubscriptionWhereInput): UserSubscriptionPayload
+  user(
+    where: UserSubscriptionWhereInput
+  ): UserSubscriptionPayload
+  post(
+    where: PostSubscriptionWhereInput
+  ): PostSubscriptionPayload
+  comment(
+    where: CommentSubscriptionWhereInput
+  ): CommentSubscriptionPayload
 }
 
 type User implements Node {
@@ -927,6 +982,15 @@ type User implements Node {
     first: Int
     last: Int
   ): [Post!]
+  comments(
+    where: CommentWhereInput
+    orderBy: CommentOrderByInput
+    skip: Int
+    after: String
+    before: String
+    first: Int
+    last: Int
+  ): [Comment!]
 }
 
 """
@@ -948,11 +1012,12 @@ type UserConnection {
 input UserCreateInput {
   name: String!
   email: String!
-  posts: PostCreateManyWithoutUserInput
+  posts: PostCreateManyWithoutAuthorInput
+  comments: CommentCreateManyWithoutAuthorInput
 }
 
-input UserCreateOneInput {
-  create: UserCreateInput
+input UserCreateOneWithoutCommentsInput {
+  create: UserCreateWithoutCommentsInput
   connect: UserWhereUniqueInput
 }
 
@@ -961,9 +1026,16 @@ input UserCreateOneWithoutPostsInput {
   connect: UserWhereUniqueInput
 }
 
+input UserCreateWithoutCommentsInput {
+  name: String!
+  email: String!
+  posts: PostCreateManyWithoutAuthorInput
+}
+
 input UserCreateWithoutPostsInput {
   name: String!
   email: String!
+  comments: CommentCreateManyWithoutAuthorInput
 }
 
 """
@@ -1045,24 +1117,19 @@ input UserSubscriptionWhereInput {
   node: UserWhereInput
 }
 
-input UserUpdateDataInput {
-  name: String
-  email: String
-  posts: PostUpdateManyWithoutUserInput
-}
-
 input UserUpdateInput {
   name: String
   email: String
-  posts: PostUpdateManyWithoutUserInput
+  posts: PostUpdateManyWithoutAuthorInput
+  comments: CommentUpdateManyWithoutAuthorInput
 }
 
-input UserUpdateOneInput {
-  create: UserCreateInput
+input UserUpdateOneWithoutCommentsInput {
+  create: UserCreateWithoutCommentsInput
   connect: UserWhereUniqueInput
   delete: Boolean
-  update: UserUpdateDataInput
-  upsert: UserUpsertNestedInput
+  update: UserUpdateWithoutCommentsDataInput
+  upsert: UserUpsertWithoutCommentsInput
 }
 
 input UserUpdateOneWithoutPostsInput {
@@ -1073,14 +1140,21 @@ input UserUpdateOneWithoutPostsInput {
   upsert: UserUpsertWithoutPostsInput
 }
 
+input UserUpdateWithoutCommentsDataInput {
+  name: String
+  email: String
+  posts: PostUpdateManyWithoutAuthorInput
+}
+
 input UserUpdateWithoutPostsDataInput {
   name: String
   email: String
+  comments: CommentUpdateManyWithoutAuthorInput
 }
 
-input UserUpsertNestedInput {
-  update: UserUpdateDataInput!
-  create: UserCreateInput!
+input UserUpsertWithoutCommentsInput {
+  update: UserUpdateWithoutCommentsDataInput!
+  create: UserCreateWithoutCommentsInput!
 }
 
 input UserUpsertWithoutPostsInput {
@@ -1304,6 +1378,9 @@ input UserWhereInput {
   posts_every: PostWhereInput
   posts_some: PostWhereInput
   posts_none: PostWhereInput
+  comments_every: CommentWhereInput
+  comments_some: CommentWhereInput
+  comments_none: CommentWhereInput
 }
 
 input UserWhereUniqueInput {
